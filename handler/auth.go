@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"slices"
 
 	"github.com/gorilla/sessions"
 	"github.com/labstack/echo-contrib/session"
@@ -38,8 +37,6 @@ type logInRequest struct {
 	Token string `query:"token" validate:"required"`
 }
 
-var authenticatedClients = make([]string, 0)
-
 func (h *Handler) validateLogInToken(c echo.Context) error {
 	req := new(logInRequest)
 	if err := bindAndValidate(c, req); err != nil {
@@ -51,29 +48,13 @@ func (h *Handler) validateLogInToken(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid token")
 	}
 
-	clientId := claims.ClientID
-	if clientId != "" {
-		c.SetCookie(&http.Cookie{
-			Name:     "clientId",
-			Value:    clientId,
-			HttpOnly: true,
-			MaxAge:   -1,
-		})
-		if !slices.Contains(authenticatedClients, clientId) {
-			return echo.NewHTTPError(http.StatusUnauthorized, "Invalid token")
-		}
-		idx := slices.Index(authenticatedClients, clientId)
-		authenticatedClients = append(authenticatedClients[:idx], authenticatedClients[idx+1:]...)
-
-	} else {
-		var user *repo.User
-		if user, err = h.Repo.GetUserById(c.Request().Context(), claims.UserID); err != nil {
+	var user *repo.User
+	if user, err = h.Repo.GetUserById(c.Request().Context(), claims.UserID); err != nil {
+		return err
+	}
+	if !user.IsVerified {
+		if err = h.Repo.SetIsVerified(c.Request().Context(), user.Id, true); err != nil {
 			return err
-		}
-		if !user.IsVerified {
-			if err = h.Repo.SetIsVerified(c.Request().Context(), user.Id, true); err != nil {
-				return err
-			}
 		}
 	}
 	if _, err = createSession(c, h.Config.SessionDuration, claims.UserID); err != nil {
@@ -98,7 +79,7 @@ func (h *Handler) sendLoginEmail(c echo.Context) error {
 	}
 
 	userEmail := sanitizeEmail(req.Email)
-	var userID uint64
+	var userID int
 	user, err := h.Repo.GetUserByEmail(c.Request().Context(), userEmail)
 	if user != nil {
 		userID = user.Id
@@ -112,15 +93,7 @@ func (h *Handler) sendLoginEmail(c echo.Context) error {
 		}
 	}
 
-	clientId := fingerprintUser(c.RealIP(), c.Request().UserAgent())
-	c.SetCookie(&http.Cookie{
-		Name:     "clientId",
-		Value:    clientId,
-		HttpOnly: true,
-		MaxAge:   int(h.Config.LogInTokenExpiresIn.Seconds()),
-	})
-
-	token, err := auth.GenerateLoginToken(auth.TokenClaims{UserID: userID, ClientID: clientId}, h.Config.JWTSecret, h.Config.LogInTokenExpiresIn)
+	token, err := auth.GenerateLoginToken(auth.TokenClaims{UserID: userID}, h.Config.JWTSecret, h.Config.LogInTokenExpiresIn)
 	if err != nil {
 		return fmt.Errorf("Failed to generate login token: %w", err)
 	}
@@ -138,6 +111,7 @@ func (h *Handler) sendLoginEmail(c echo.Context) error {
 		ToAddresses: []string{req.Email},
 		FromAddress: h.Config.SenderEmail,
 		FromName:    "The App",
+		NoStack:     true,
 	}
 	if err = h.Email.SendHTML(&emailOpts, "login.tmpl", emailData); err != nil {
 		return fmt.Errorf("Failed to send email: %w", err)

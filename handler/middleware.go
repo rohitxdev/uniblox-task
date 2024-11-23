@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"slices"
 
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
@@ -15,26 +14,19 @@ const (
 	RoleAdmin role = "admin"
 )
 
-type permission string
-
-const (
-	PermReadAdmin permission = "read:admin"
-	PermReadMe    permission = "read:me"
-)
-
-var permissions = map[role][]permission{
-	RoleUser:  {PermReadMe},
-	RoleAdmin: {PermReadAdmin, PermReadMe},
+var roles = map[role]uint8{
+	RoleUser:  1,
+	RoleAdmin: 2,
 }
 
-func (h *Handler) require(permission permission) echo.MiddlewareFunc {
+func (h *Handler) require(r role) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			sess, err := session.Get("session", c)
 			if err != nil {
 				return err
 			}
-			userID, ok := sess.Values["userId"].(uint64)
+			userID, ok := sess.Values["userId"].(int)
 			if !ok {
 				return echo.ErrUnauthorized
 			}
@@ -42,7 +34,10 @@ func (h *Handler) require(permission permission) echo.MiddlewareFunc {
 			if err != nil {
 				return echo.NewHTTPError(http.StatusUnauthorized, err)
 			}
-			if (!slices.Contains(permissions[role(user.Role)], permission)) || (user.AccountStatus != "active") {
+			if user.AccountStatus != "active" {
+				return echo.ErrForbidden
+			}
+			if roles[role(user.Role)] < roles[role(r)] {
 				return echo.ErrForbidden
 			}
 			c.Set("user", user)

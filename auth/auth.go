@@ -8,17 +8,15 @@ import (
 )
 
 type TokenClaims struct {
-	ClientID string `json:"clientId"`
-	UserID   uint64 `json:"userId"`
+	UserID int `json:"userId"`
 }
 
 // GenerateLoginToken generates a login token for the claims.
 func GenerateLoginToken(tokenClaims TokenClaims, jwtSecret string, expiresIn time.Duration) (string, error) {
 	claims := jwt.MapClaims{
-		"userId":   tokenClaims.UserID,
-		"clientId": tokenClaims.ClientID,
-		"nbf":      time.Now().Unix(),
-		"exp":      time.Now().Add(expiresIn).Unix(),
+		"userId": tokenClaims.UserID,
+		"nbf":    time.Now().Unix(),
+		"exp":    time.Now().Add(expiresIn).Unix(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenStr, err := token.SignedString([]byte(jwtSecret))
@@ -44,8 +42,7 @@ func ValidateLoginToken(tokenStr string, jwtSecret string) (*TokenClaims, error)
 		return nil, fmt.Errorf("Failed to validate login token: invalid claims")
 	}
 	tokenClaims := TokenClaims{
-		UserID:   uint64(claims["userId"].(float64)),
-		ClientID: claims["clientId"].(string),
+		UserID: int(claims["userId"].(float64)),
 	}
 
 	return &tokenClaims, nil

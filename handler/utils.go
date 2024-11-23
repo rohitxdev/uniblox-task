@@ -43,15 +43,15 @@ type response struct {
 	Message string `json:"message,omitempty"`
 }
 
-func createSession(c echo.Context, duration time.Duration, userId uint64) (*sessions.Session, error) {
+func createSession(c echo.Context, duration time.Duration, userId int) (*sessions.Session, error) {
 	sess, err := session.Get("session", c)
 	if err != nil {
 		return nil, err
 	}
 	sess.Options = &sessions.Options{
-		Path:     "/",
-		MaxAge:   int(duration.Seconds()),
-		HttpOnly: true,
+		Path:   "/",
+		MaxAge: int(duration.Seconds()),
+		// HttpOnly: true,
 	}
 	sess.Values["userId"] = userId
 	if err := sess.Save(c.Request(), c.Response()); err != nil {

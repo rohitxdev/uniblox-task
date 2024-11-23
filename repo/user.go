@@ -25,11 +25,11 @@ type User struct {
 	ImageUrl      *string `json:"imageUrl"`
 	CreatedAt     string  `json:"createdAt"`
 	UpdatedAt     string  `json:"updatedAt"`
-	Id            uint64  `json:"id"`
+	Id            int     `json:"id"`
 	IsVerified    bool    `json:"isVerified"`
 }
 
-func (repo *Repo) GetUserById(ctx context.Context, userId uint64) (*User, error) {
+func (repo *Repo) GetUserById(ctx context.Context, userId int) (*User, error) {
 	var user User
 	err := repo.db.QueryRowContext(ctx, `SELECT id, role, email, full_name, date_of_birth, gender, phone_number, account_status, image_url, is_verified, created_at, updated_at FROM users WHERE id=$1 LIMIT 1;`, userId).Scan(&user.Id, &user.Role, &user.Email, &user.FullName, &user.DateOfBirth, &user.Gender, &user.PhoneNumber, &user.AccountStatus, &user.ImageUrl, &user.IsVerified, &user.CreatedAt, &user.UpdatedAt)
 
@@ -71,8 +71,8 @@ func (repo *Repo) GetUserByEmail(ctx context.Context, email string) (*User, erro
 	return &user, nil
 }
 
-func (repo *Repo) CreateUser(ctx context.Context, email string) (uint64, error) {
-	var userId uint64
+func (repo *Repo) CreateUser(ctx context.Context, email string) (int, error) {
+	var userId int
 	err := repo.db.QueryRowContext(ctx, `INSERT INTO users(email) VALUES($1) RETURNING id;`, email).Scan(&userId)
 	if err != nil {
 		return 0, err
@@ -100,7 +100,7 @@ func (repo *Repo) Update(ctx context.Context, id string, updates map[string]any)
 	return err
 }
 
-func (r *Repo) SetIsVerified(ctx context.Context, id uint64, isVerified bool) error {
+func (r *Repo) SetIsVerified(ctx context.Context, id int, isVerified bool) error {
 	_, err := r.db.ExecContext(ctx, `UPDATE users SET is_verified=$1 WHERE id=$2;`, isVerified, id)
 	return err
 }

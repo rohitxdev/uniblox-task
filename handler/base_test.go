@@ -51,10 +51,9 @@ func createHttpRequest(opts *httpRequestOpts) (*http.Request, error) {
 	return req, err
 }
 
-func TestRootRoutes(t *testing.T) {
+func TestBaseRoutes(t *testing.T) {
 	//Load config
 	cfg, err := config.Load()
-	t.Log()
 	if err != nil {
 		panic("Failed to load config: " + err.Error())
 	}

@@ -1,0 +1,21 @@
+package handler
+
+import (
+	"net/http"
+
+	"github.com/labstack/echo/v4"
+	"github.com/rohitxdev/go-api-starter/repo"
+)
+
+type GetProductsResponse struct {
+	Products []repo.Product `json:"products"`
+}
+
+func (h *Handler) GetProducts(c echo.Context) error {
+	products, err := h.Repo.GetProducts(c.Request().Context())
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, GetProductsResponse{Products: products})
+}
