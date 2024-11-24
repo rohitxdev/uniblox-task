@@ -66,17 +66,13 @@ func (h *Handler) ValidateLogInToken(c echo.Context) error {
 
 type sendLoginEmailRequest struct {
 	Email string `form:"email" json:"email" validate:"required,email"`
+	Host  string `form:"host" json:"host" validate:"required,hostname"`
 }
 
 func (h *Handler) SendLoginEmail(c echo.Context) error {
 	req := new(sendLoginEmailRequest)
 	if err := bindAndValidate(c, req); err != nil {
 		return err
-	}
-
-	host := c.Request().Host
-	if host == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "Host header is empty")
 	}
 
 	userEmail := sanitizeEmail(req.Email)
