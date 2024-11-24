@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 ARG BASE_IMAGE_TAG=:1.23.2-alpine
 
 # Development image
