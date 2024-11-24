@@ -9,8 +9,6 @@ import (
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/rohitxdev/go-api-starter/auth"
-	"github.com/rohitxdev/go-api-starter/cryptoutil"
-	"github.com/rohitxdev/go-api-starter/email"
 	"github.com/rohitxdev/go-api-starter/repo"
 )
 
@@ -34,92 +32,65 @@ func (h *Handler) LogOut(c echo.Context) error {
 }
 
 type logInRequest struct {
-	Token string `query:"token" validate:"required"`
+	Email    string `form:"email" json:"email" validate:"required,email"`
+	Password string `form:"password" json:"password" validate:"required"`
 }
 
-func (h *Handler) ValidateLogInToken(c echo.Context) error {
+func (h *Handler) LogIn(c echo.Context) error {
 	req := new(logInRequest)
 	if err := bindAndValidate(c, req); err != nil {
 		return err
 	}
-
-	claims, err := auth.ValidateLoginToken(req.Token, h.Config.JWTSecret)
+	userEmail := sanitizeEmail(req.Email)
+	user, err := h.Repo.GetUserByEmail(c.Request().Context(), userEmail)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "Invalid token")
-	}
-
-	var user *repo.User
-	if user, err = h.Repo.GetUserById(c.Request().Context(), claims.UserID); err != nil {
-		return err
-	}
-	if !user.IsVerified {
-		if err = h.Repo.SetIsVerified(c.Request().Context(), user.Id, true); err != nil {
-			return err
+		if errors.Is(err, repo.ErrUserNotFound) {
+			return c.JSON(http.StatusUnauthorized, response{Message: "Invalid credentials"})
 		}
-		_, _ = h.Repo.CreateCoupon(c.Request().Context(), user.Id, "UNIBLOX10", 10)
-	}
-	if _, err = CreateSession(c, h.Config.SessionDuration, claims.UserID); err != nil {
 		return err
 	}
-	return c.Render(http.StatusOK, "log-in-success.tmpl", nil)
+	if !auth.VerifyPassword(req.Password, user.PasswordHash) {
+		return c.JSON(http.StatusUnauthorized, response{Message: "Invalid credentials"})
+	}
+	if _, err = CreateSession(c, h.Config.SessionDuration, user.Id); err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, response{Message: "Logged in successfully"})
 }
 
-type sendLoginEmailRequest struct {
-	Email string `form:"email" json:"email" validate:"required,email"`
+type signUpRequest struct {
+	Email    string `form:"email" json:"email" validate:"required,email"`
+	Password string `form:"password" json:"password" validate:"required"`
 }
 
-func (h *Handler) SendLoginEmail(c echo.Context) error {
-	req := new(sendLoginEmailRequest)
+func (h *Handler) SignUp(c echo.Context) error {
+	req := new(signUpRequest)
 	if err := bindAndValidate(c, req); err != nil {
 		return err
 	}
-
-	host := c.Request().Host
-	if host == "" {
-		return echo.NewHTTPError(http.StatusBadRequest, "Host header is empty")
-	}
-
 	userEmail := sanitizeEmail(req.Email)
 	var userID int
-	user, err := h.Repo.GetUserByEmail(c.Request().Context(), userEmail)
-	if user != nil {
-		userID = user.Id
-	} else {
-		if !errors.Is(err, repo.ErrUserNotFound) {
-			return fmt.Errorf("Failed to get user: %w", err)
-		}
-		userID, err = h.Repo.CreateUser(c.Request().Context(), userEmail)
-		if err != nil {
-			return fmt.Errorf("Failed to create user: %w", err)
-		}
+	_, err := h.Repo.GetUserByEmail(c.Request().Context(), userEmail)
+	if err == nil {
+		return c.JSON(http.StatusBadRequest, response{Message: "User already exists"})
 	}
 
-	token, err := auth.GenerateLoginToken(auth.TokenClaims{UserID: userID}, h.Config.JWTSecret, h.Config.LogInTokenExpiresIn)
+	passwordHash, err := auth.HashPassword(req.Password)
 	if err != nil {
-		return fmt.Errorf("Failed to generate login token: %w", err)
+		return fmt.Errorf("Failed to hash password: %w", err)
 	}
 
-	protocol := "http"
-	if c.IsTLS() {
-		protocol = "https"
+	if userID, err = h.Repo.CreateUser(c.Request().Context(), userEmail, passwordHash); err != nil {
+		return fmt.Errorf("Failed to set password hash: %w", err)
 	}
-	emailData := map[string]any{
-		"loginURL":     fmt.Sprintf("%s://%s%s?token=%s", protocol, host, c.Path(), token),
-		"validMinutes": h.Config.LogInTokenExpiresIn.Minutes(),
+	if err = h.Repo.SetIsVerified(c.Request().Context(), userID, true); err != nil {
+		return err
 	}
-	emailOpts := email.BaseOpts{
-		Subject:     "Log In to Your Account",
-		ToAddresses: []string{req.Email},
-		FromAddress: h.Config.SenderEmail,
-		FromName:    "The App",
-		NoStack:     true,
+	if _, err = h.Repo.CreateCoupon(c.Request().Context(), userID, "UNIBLOX10", 10); err != nil {
+		return err
 	}
-	if err = h.Email.SendHTML(&emailOpts, "login.tmpl", emailData); err != nil {
-		return fmt.Errorf("Failed to send email: %w", err)
+	if _, err = CreateSession(c, h.Config.SessionDuration, userID); err != nil {
+		return err
 	}
-
-	return c.JSON(http.StatusOK, response{Message: "Login link sent to " + req.Email})
-}
-func fingerprintUser(IP string, userAgent string) string {
-	return cryptoutil.Base62Hash(IP + userAgent)
+	return c.JSON(http.StatusOK, response{Message: "Signed up successfully"})
 }

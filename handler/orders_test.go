@@ -89,7 +89,7 @@ func TestOrders(t *testing.T) {
 				args: args{
 					reqOpts: &httpRequestOpts{
 						method: http.MethodGet,
-						path:   "/orders",
+						path:   "/orders/all",
 					},
 				},
 				wantStatus: http.StatusUnauthorized,

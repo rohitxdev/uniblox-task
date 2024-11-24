@@ -1,49 +1,49 @@
 package auth
 
 import (
-	"fmt"
-	"time"
+	"crypto/rand"
+	"encoding/base64"
 
-	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/argon2"
 )
 
-type TokenClaims struct {
-	UserID int `json:"userId"`
+const (
+	time    = 1         // number of iterations
+	memory  = 64 * 1024 // memory in KiB
+	threads = 4         // parallelism
+	keyLen  = 32        // length of the generated key
+)
+
+func generateSalt(length int) ([]byte, error) {
+	salt := make([]byte, length)
+	_, err := rand.Read(salt)
+	if err != nil {
+		return nil, err
+	}
+	return salt, nil
 }
 
-// GenerateLoginToken generates a login token for the claims.
-func GenerateLoginToken(tokenClaims TokenClaims, jwtSecret string, expiresIn time.Duration) (string, error) {
-	claims := jwt.MapClaims{
-		"userId": tokenClaims.UserID,
-		"nbf":    time.Now().Unix(),
-		"exp":    time.Now().Add(expiresIn).Unix(),
-	}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenStr, err := token.SignedString([]byte(jwtSecret))
+func HashPassword(password string) (string, error) {
+	salt, err := generateSalt(16)
 	if err != nil {
-		return "", fmt.Errorf("Failed to generate login token: %w", err)
+		return "", err
 	}
-	return tokenStr, nil
+
+	hash := argon2.IDKey([]byte(password), salt, time, memory, threads, keyLen)
+	fullHash := append(salt, hash...)
+	return base64.RawStdEncoding.EncodeToString(fullHash), nil
 }
 
-// ValidateLoginToken validates the login token and returns the claims.
-func ValidateLoginToken(tokenStr string, jwtSecret string) (*TokenClaims, error) {
-	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (any, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		}
-		return []byte(jwtSecret), nil
-	})
+func VerifyPassword(password string, fullHash string) bool {
+	data, err := base64.RawStdEncoding.DecodeString(fullHash)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to validate login token: %w", err)
-	}
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
-		return nil, fmt.Errorf("Failed to validate login token: invalid claims")
-	}
-	tokenClaims := TokenClaims{
-		UserID: int(claims["userId"].(float64)),
+		return false
 	}
 
-	return &tokenClaims, nil
+	salt := data[:16]
+	hash := data[16:]
+
+	newHash := argon2.IDKey([]byte(password), salt, 1, 64*1024, 4, 32)
+
+	return string(hash) == string(newHash)
 }

@@ -17,6 +17,7 @@ var (
 type User struct {
 	Email         string  `json:"email"`
 	Role          string  `json:"role"`
+	PasswordHash  string  `json:"passwordHash"`
 	AccountStatus string  `json:"accountStatus"`
 	FullName      *string `json:"fullName,omitempty"`
 	DateOfBirth   *string `json:"dateOfBirth"`
@@ -31,7 +32,7 @@ type User struct {
 
 func (repo *Repo) GetUserById(ctx context.Context, userId int) (*User, error) {
 	var user User
-	err := repo.db.QueryRowContext(ctx, `SELECT id, role, email, full_name, date_of_birth, gender, phone_number, account_status, image_url, is_verified, created_at, updated_at FROM users WHERE id=$1 LIMIT 1;`, userId).Scan(&user.Id, &user.Role, &user.Email, &user.FullName, &user.DateOfBirth, &user.Gender, &user.PhoneNumber, &user.AccountStatus, &user.ImageUrl, &user.IsVerified, &user.CreatedAt, &user.UpdatedAt)
+	err := repo.db.QueryRowContext(ctx, `SELECT id, role, email, password_hash, full_name, date_of_birth, gender, phone_number, account_status, image_url, is_verified, created_at, updated_at FROM users WHERE id=$1 LIMIT 1;`, userId).Scan(&user.Id, &user.Role, &user.Email, &user.PasswordHash, &user.FullName, &user.DateOfBirth, &user.Gender, &user.PhoneNumber, &user.AccountStatus, &user.ImageUrl, &user.IsVerified, &user.CreatedAt, &user.UpdatedAt)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -52,7 +53,7 @@ func (repo *Repo) GetUserById(ctx context.Context, userId int) (*User, error) {
 
 func (repo *Repo) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	var user User
-	err := repo.db.QueryRowContext(ctx, `SELECT id, role, email, full_name, date_of_birth, gender, phone_number, account_status, image_url, is_verified, created_at, updated_at FROM users WHERE email=$1 LIMIT 1;`, email).Scan(&user.Id, &user.Role, &user.Email, &user.FullName, &user.DateOfBirth, &user.Gender, &user.PhoneNumber, &user.AccountStatus, &user.ImageUrl, &user.IsVerified, &user.CreatedAt, &user.UpdatedAt)
+	err := repo.db.QueryRowContext(ctx, `SELECT id, role, email, password_hash, full_name, date_of_birth, gender, phone_number, account_status, image_url, is_verified, created_at, updated_at FROM users WHERE email=$1 LIMIT 1;`, email).Scan(&user.Id, &user.Role, &user.Email, &user.PasswordHash, &user.FullName, &user.DateOfBirth, &user.Gender, &user.PhoneNumber, &user.AccountStatus, &user.ImageUrl, &user.IsVerified, &user.CreatedAt, &user.UpdatedAt)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -71,10 +72,18 @@ func (repo *Repo) GetUserByEmail(ctx context.Context, email string) (*User, erro
 	return &user, nil
 }
 
-func (repo *Repo) CreateUser(ctx context.Context, email string) (int, error) {
+func (repo *Repo) CreateUser(ctx context.Context, email string, passwordHash string) (int, error) {
 	var userId int
-	err := repo.db.QueryRowContext(ctx, `INSERT INTO users(email) VALUES($1) RETURNING id;`, email).Scan(&userId)
+	err := repo.db.QueryRowContext(ctx, `INSERT INTO users(email, password_hash) VALUES($1, $2) RETURNING id;`, email, passwordHash).Scan(&userId)
 	if err != nil {
+		if err, ok := err.(*pq.Error); ok {
+			switch code := err.Code.Name(); code {
+			case "unique_violation":
+				return 0, ErrUserAlreadyExists
+			default:
+				return 0, fmt.Errorf("Failed to create user: %w", err)
+			}
+		}
 		return 0, err
 	}
 	return userId, nil

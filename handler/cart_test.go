@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
-	"github.com/rohitxdev/go-api-starter/auth"
 	"github.com/rohitxdev/go-api-starter/blobstore"
 	"github.com/rohitxdev/go-api-starter/config"
 	"github.com/rohitxdev/go-api-starter/database"
@@ -197,15 +196,12 @@ func TestCart(t *testing.T) {
 }
 
 func createTestSessionCookie(e *echo.Echo, jwtSecret string) (string, error) {
-	token, err := auth.GenerateLoginToken(auth.TokenClaims{UserID: 1}, jwtSecret, time.Hour*24)
-	if err != nil {
-		return "", err
-	}
 	req, err := createHttpRequest(&httpRequestOpts{
-		method: http.MethodGet,
+		method: http.MethodPost,
 		path:   "/auth/log-in",
-		query: map[string]string{
-			"token": token,
+		body: echo.Map{
+			"email":    "test@test.com",
+			"password": "test",
 		}, headers: map[string]string{
 			"Content-Type": "application/json",
 		},

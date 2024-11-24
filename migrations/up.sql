@@ -5,6 +5,7 @@ CREATE TABLE users (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     role TEXT NOT NULL CHECK (role IN ('user', 'admin')) DEFAULT 'user',
     email CITEXT NOT NULL UNIQUE CHECK (LENGTH(email) <= 64),
+    password_hash TEXT NOT NULL,
     full_name TEXT CHECK (LENGTH(full_name) <= 64),
     date_of_birth DATE CHECK (date_of_birth >= '1900-01-01'),
     gender TEXT CHECK (gender IN ('male', 'female', 'other')),
@@ -31,7 +32,6 @@ CREATE TRIGGER set_user_updated_at BEFORE
 UPDATE ON users FOR EACH ROW
 EXECUTE FUNCTION set_updated_at_column ();
 
-
 CREATE TABLE products (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name TEXT NOT NULL CHECK (LENGTH(name) <= 128),
@@ -44,7 +44,6 @@ CREATE TABLE products (
 CREATE TRIGGER set_products_updated_at BEFORE
 UPDATE ON products FOR EACH ROW
 EXECUTE FUNCTION set_updated_at_column ();
-
 
 CREATE TABLE orders (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -60,7 +59,8 @@ CREATE TABLE orders (
 );
 
 CREATE TRIGGER set_orders_updated_at BEFORE
-UPDATE ON products FOR EACH ROW EXECUTE FUNCTION set_updated_at_column ();
+UPDATE ON orders FOR EACH ROW
+EXECUTE FUNCTION set_updated_at_column ();
 
 CREATE TABLE order_items (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -68,13 +68,13 @@ CREATE TABLE order_items (
     product_id BIGINT NOT NULL REFERENCES products (id),
     quantity BIGINT NOT NULL CHECK (quantity > 0),
     created_at TIMESTAMPTZ DEFAULT current_timestamp,
-    updated_at TIMESTAMPTZ DEFAULT current_timestamp
+    updated_at TIMESTAMPTZ DEFAULT current_timestamp,
     UNIQUE (order_id, product_id)
 );
 
 CREATE TRIGGER set_order_items_updated_at BEFORE
-UPDATE ON order_items FOR EACH ROW EXECUTE FUNCTION set_updated_at_column ();
-
+UPDATE ON order_items FOR EACH ROW
+EXECUTE FUNCTION set_updated_at_column ();
 
 CREATE TABLE cart_items (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -82,14 +82,13 @@ CREATE TABLE cart_items (
     product_id BIGINT NOT NULL REFERENCES products (id),
     quantity BIGINT NOT NULL CHECK (quantity > 0),
     created_at TIMESTAMPTZ DEFAULT current_timestamp,
-    updated_at TIMESTAMPTZ DEFAULT current_timestamp
+    updated_at TIMESTAMPTZ DEFAULT current_timestamp,
     UNIQUE (user_id, product_id)
 );
 
 CREATE TRIGGER set_cart_items_updated_at BEFORE
 UPDATE ON cart_items FOR EACH ROW
 EXECUTE FUNCTION set_updated_at_column ();
-
 
 CREATE TABLE coupons (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

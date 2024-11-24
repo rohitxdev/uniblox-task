@@ -18,11 +18,8 @@ func setUpRoutes(e *echo.Echo, svc *Services) {
 
 	auth := e.Group("/auth")
 	{
-		logIn := auth.Group("/log-in")
-		{
-			logIn.GET("", h.ValidateLogInToken)
-			logIn.POST("", h.SendLoginEmail)
-		}
+		auth.POST("/sign-up", h.SignUp)
+		auth.POST("/log-in", h.LogIn)
 		auth.GET("/log-out", h.LogOut)
 	}
 
