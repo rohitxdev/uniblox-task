@@ -20,8 +20,6 @@ import (
 	"github.com/rohitxdev/go-api-starter/logger"
 	"github.com/rohitxdev/go-api-starter/repo"
 	"go.uber.org/automaxprocs/maxprocs"
-	"golang.org/x/net/http2"
-	"golang.org/x/net/http2/h2c"
 )
 
 func Run() error {
@@ -100,8 +98,8 @@ func Run() error {
 	//Start HTTP server.
 	go func() {
 		// Stdlib supports HTTP/2 by default when serving over TLS, but has to be explicitly enabled otherwise.
-		h2Handler := h2c.NewHandler(h, &http2.Server{})
-		errCh <- http.ListenAndServe(address, h2Handler)
+		// h2Handler := h2c.NewHandler(h, &http2.Server{})
+		errCh <- http.ListenAndServe(address, h)
 	}()
 
 	logr.Info().Msg(fmt.Sprintf("Server is listening on http://%s", address))
