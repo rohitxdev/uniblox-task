@@ -11,7 +11,9 @@ ENV_FILE="${ENV_FILE:-".env"}"
 
 PACKAGE_NAME=$(awk '/^module/ { print $2 }' go.mod)
 APP_NAME="$(basename "$PACKAGE_NAME")"
-APP_VERSION="$(git describe --tags --always --dirty)"
+APP_VERSION="$(
+    git describe --tags --always --dirty || echo "0.0.0"
+)"
 GO_VERSION=$(awk '/^go/ { print $2 }' go.mod)
 BASE_IMAGE_TAG=":$GO_VERSION-alpine3.20"
 
