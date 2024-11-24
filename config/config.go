@@ -54,7 +54,8 @@ type Config struct {
 	// SMTPPort is the port of the SMTP server.
 	SMTPPort int `json:"smtpPort" validate:"required"`
 	// IsDev is a flag indicating whether the server is running in development mode.
-	IsDev bool `json:"isDev"`
+	IsDev           bool `json:"isDev"`
+	UseSecureCookie bool `json:"useSecureCookie"`
 }
 
 func Load() (*Config, error) {

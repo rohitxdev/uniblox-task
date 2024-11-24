@@ -52,7 +52,7 @@ func (h *Handler) LogIn(c echo.Context) error {
 	if !auth.VerifyPassword(req.Password, user.PasswordHash) {
 		return c.JSON(http.StatusUnauthorized, response{Message: "Invalid credentials"})
 	}
-	if _, err = CreateSession(c, h.Config.SessionDuration, user.ID, !h.Config.IsDev); err != nil {
+	if _, err = CreateSession(c, h.Config.SessionDuration, user.ID, !h.Config.UseSecureCookie); err != nil {
 		return err
 	}
 	return c.JSON(http.StatusOK, response{Message: "Logged in successfully"})
@@ -89,7 +89,7 @@ func (h *Handler) SignUp(c echo.Context) error {
 	if _, err = h.Repo.CreateCoupon(c.Request().Context(), userID, "UNIBLOX10", 10); err != nil {
 		return err
 	}
-	if _, err = CreateSession(c, h.Config.SessionDuration, userID, !h.Config.IsDev); err != nil {
+	if _, err = CreateSession(c, h.Config.SessionDuration, userID, !h.Config.UseSecureCookie); err != nil {
 		return err
 	}
 	return c.JSON(http.StatusCreated, response{Message: "Signed up successfully"})
