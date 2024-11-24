@@ -1,4 +1,4 @@
-ARG BASE_IMAGE_TAG
+ARG BASE_IMAGE_TAG=:1.23.2-alpine
 
 # Development image
 FROM golang${BASE_IMAGE_TAG} AS development
