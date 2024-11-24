@@ -49,9 +49,10 @@ func CreateSession(c echo.Context, duration time.Duration, userId int) (*session
 		return nil, err
 	}
 	sess.Options = &sessions.Options{
-		Path:   "/",
-		MaxAge: int(duration.Seconds()),
-		// HttpOnly: true,
+		Path:     "/",
+		MaxAge:   int(duration.Seconds()),
+		HttpOnly: true,
+		Secure:   c.Request().URL.Scheme == "https",
 	}
 	sess.Values["userId"] = userId
 	if err := sess.Save(c.Request(), c.Response()); err != nil {

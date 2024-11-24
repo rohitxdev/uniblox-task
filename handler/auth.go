@@ -92,5 +92,5 @@ func (h *Handler) SignUp(c echo.Context) error {
 	if _, err = CreateSession(c, h.Config.SessionDuration, userID); err != nil {
 		return err
 	}
-	return c.JSON(http.StatusOK, response{Message: "Signed up successfully"})
+	return c.JSON(http.StatusCreated, response{Message: "Signed up successfully"})
 }
