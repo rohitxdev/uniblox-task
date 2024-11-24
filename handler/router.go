@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"fmt"
-
 	"github.com/labstack/echo-contrib/echoprometheus"
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
@@ -49,6 +47,4 @@ func setUpRoutes(e *echo.Echo, svc *Services) {
 		coupons.GET("/all", h.GetAllCoupons, h.require(RoleAdmin))
 		coupons.GET("", h.GetAvailableCoupons, h.require(RoleUser))
 	}
-
-	fmt.Println(h.Config.UseSecureCookie)
 }
