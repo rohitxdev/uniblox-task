@@ -38,7 +38,7 @@ func (h *Handler) CreateOrder(c echo.Context) error {
 
 	var coupon *repo.Coupon
 	if req.CouponCode != "" {
-		coupons, err := h.Repo.GetAvailableCoupons(c.Request().Context(), user.Id)
+		coupons, err := h.Repo.GetAvailableCoupons(c.Request().Context(), user.ID)
 		if err != nil {
 			return err
 		}
@@ -48,14 +48,14 @@ func (h *Handler) CreateOrder(c echo.Context) error {
 				break
 			}
 		}
-		if coupon.IsUsed || coupon.UserID != user.Id {
+		if coupon.IsUsed || coupon.UserID != user.ID {
 			return c.JSON(http.StatusBadRequest, response{Message: "Invalid coupon"})
 		}
 	}
 
 	var preTotalAmount int
 
-	cartItems, products, err := h.Repo.GetCartWithProducts(c.Request().Context(), user.Id)
+	cartItems, products, err := h.Repo.GetCartWithProducts(c.Request().Context(), user.ID)
 	if err != nil {
 		return err
 	}
@@ -68,12 +68,12 @@ func (h *Handler) CreateOrder(c echo.Context) error {
 		preTotalAmount += cartItem.Quantity * products[i].Price
 	}
 
-	order, err := h.Repo.CreateOrder(c.Request().Context(), cartItems, user.Id, preTotalAmount, coupon)
+	order, err := h.Repo.CreateOrder(c.Request().Context(), cartItems, user.ID, preTotalAmount, coupon)
 	if err != nil {
 		return err
 	}
 
-	if err = h.Repo.DiscardCart(c.Request().Context(), user.Id); err != nil {
+	if err = h.Repo.DiscardCart(c.Request().Context(), user.ID); err != nil {
 		return err
 	}
 
@@ -82,7 +82,7 @@ func (h *Handler) CreateOrder(c echo.Context) error {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 		defer cancel()
 
-		coupons, err := h.Repo.GetAvailableCoupons(ctx, user.Id)
+		coupons, err := h.Repo.GetAvailableCoupons(ctx, user.ID)
 		if err != nil {
 			h.Logger.Err(err).Msg("Failed to get available coupons")
 			return
@@ -91,7 +91,7 @@ func (h *Handler) CreateOrder(c echo.Context) error {
 		if len(coupons) > 0 {
 			return
 		}
-		ordersCount, err := h.Repo.GetOrdersCountForUser(ctx, user.Id)
+		ordersCount, err := h.Repo.GetOrdersCountForUser(ctx, user.ID)
 		if err != nil {
 			h.Logger.Err(err).Msg("Failed to get orders count for user")
 			return
@@ -102,7 +102,7 @@ func (h *Handler) CreateOrder(c echo.Context) error {
 			return
 		}
 
-		if _, err = h.Repo.CreateCoupon(ctx, user.Id, ulid.Make().String(), 10); err != nil {
+		if _, err = h.Repo.CreateCoupon(ctx, user.ID, ulid.Make().String(), 10); err != nil {
 			h.Logger.Err(err).Msg("Failed to create coupon")
 			return
 		}

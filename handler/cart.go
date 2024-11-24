@@ -23,7 +23,7 @@ func (h *Handler) GetCart(c echo.Context) error {
 		return c.NoContent(http.StatusUnauthorized)
 	}
 
-	cart, err := h.Repo.GetCart(c.Request().Context(), user.Id)
+	cart, err := h.Repo.GetCart(c.Request().Context(), user.ID)
 	if err != nil {
 		if err == repo.ErrCartNotFound {
 			return c.JSON(http.StatusNotFound, response{Message: "Cart not found."})
@@ -57,7 +57,7 @@ func (h *Handler) AddToCart(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.AddToCart(c.Request().Context(), user.Id, req.ProductID); err != nil {
+	if err := h.Repo.AddToCart(c.Request().Context(), user.ID, req.ProductID); err != nil {
 		return err
 	}
 
@@ -89,7 +89,7 @@ func (h *Handler) UpdateCartItemQuantity(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.UpdateCartItemQuantity(c.Request().Context(), user.Id, req.ProductID, req.Quantity); err != nil {
+	if err := h.Repo.UpdateCartItemQuantity(c.Request().Context(), user.ID, req.ProductID, req.Quantity); err != nil {
 		return err
 	}
 
@@ -119,7 +119,7 @@ func (h *Handler) DeleteCartItem(c echo.Context) error {
 		return err
 	}
 
-	if err := h.Repo.DeleteCartItem(c.Request().Context(), user.Id, req.ProductID); err != nil {
+	if err := h.Repo.DeleteCartItem(c.Request().Context(), user.ID, req.ProductID); err != nil {
 		return err
 	}
 

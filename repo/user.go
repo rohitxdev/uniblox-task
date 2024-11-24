@@ -26,13 +26,13 @@ type User struct {
 	ImageUrl      *string `json:"imageUrl"`
 	CreatedAt     string  `json:"createdAt"`
 	UpdatedAt     string  `json:"updatedAt"`
-	Id            int     `json:"id"`
+	ID            int     `json:"id"`
 	IsVerified    bool    `json:"isVerified"`
 }
 
 func (repo *Repo) GetUserById(ctx context.Context, userId int) (*User, error) {
 	var user User
-	err := repo.db.QueryRowContext(ctx, `SELECT id, role, email, password_hash, full_name, date_of_birth, gender, phone_number, account_status, image_url, is_verified, created_at, updated_at FROM users WHERE id=$1 LIMIT 1;`, userId).Scan(&user.Id, &user.Role, &user.Email, &user.PasswordHash, &user.FullName, &user.DateOfBirth, &user.Gender, &user.PhoneNumber, &user.AccountStatus, &user.ImageUrl, &user.IsVerified, &user.CreatedAt, &user.UpdatedAt)
+	err := repo.db.QueryRowContext(ctx, `SELECT id, role, email, password_hash, full_name, date_of_birth, gender, phone_number, account_status, image_url, is_verified, created_at, updated_at FROM users WHERE id=$1 LIMIT 1;`, userId).Scan(&user.ID, &user.Role, &user.Email, &user.PasswordHash, &user.FullName, &user.DateOfBirth, &user.Gender, &user.PhoneNumber, &user.AccountStatus, &user.ImageUrl, &user.IsVerified, &user.CreatedAt, &user.UpdatedAt)
 
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -53,7 +53,7 @@ func (repo *Repo) GetUserById(ctx context.Context, userId int) (*User, error) {
 
 func (repo *Repo) GetUserByEmail(ctx context.Context, email string) (*User, error) {
 	var user User
-	err := repo.db.QueryRowContext(ctx, `SELECT id, role, email, password_hash, full_name, date_of_birth, gender, phone_number, account_status, image_url, is_verified, created_at, updated_at FROM users WHERE email=$1 LIMIT 1;`, email).Scan(&user.Id, &user.Role, &user.Email, &user.PasswordHash, &user.FullName, &user.DateOfBirth, &user.Gender, &user.PhoneNumber, &user.AccountStatus, &user.ImageUrl, &user.IsVerified, &user.CreatedAt, &user.UpdatedAt)
+	err := repo.db.QueryRowContext(ctx, `SELECT id, role, email, password_hash, full_name, date_of_birth, gender, phone_number, account_status, image_url, is_verified, created_at, updated_at FROM users WHERE email=$1 LIMIT 1;`, email).Scan(&user.ID, &user.Role, &user.Email, &user.PasswordHash, &user.FullName, &user.DateOfBirth, &user.Gender, &user.PhoneNumber, &user.AccountStatus, &user.ImageUrl, &user.IsVerified, &user.CreatedAt, &user.UpdatedAt)
 
 	if err != nil {
 		if err == sql.ErrNoRows {

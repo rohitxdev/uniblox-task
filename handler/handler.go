@@ -175,7 +175,7 @@ func New(svc *Services) (*echo.Echo, error) {
 				log = log.Str("referer", v.Referer)
 			}
 			if user, ok := c.Get("user").(*repo.User); ok && (user != nil) {
-				log = log.Int("userId", user.Id)
+				log = log.Int("userId", user.ID)
 			}
 
 			log.Msg("HTTP request")

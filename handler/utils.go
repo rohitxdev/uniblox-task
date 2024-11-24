@@ -43,7 +43,7 @@ type response struct {
 	Message string `json:"message,omitempty"`
 }
 
-func CreateSession(c echo.Context, duration time.Duration, userId int) (*sessions.Session, error) {
+func CreateSession(c echo.Context, duration time.Duration, userId int, secure bool) (*sessions.Session, error) {
 	sess, err := session.Get("session", c)
 	if err != nil {
 		return nil, err
@@ -52,7 +52,7 @@ func CreateSession(c echo.Context, duration time.Duration, userId int) (*session
 		Path:     "/",
 		MaxAge:   int(duration.Seconds()),
 		HttpOnly: true,
-		Secure:   c.Request().URL.Scheme == "https",
+		Secure:   secure,
 	}
 	sess.Values["userId"] = userId
 	if err := sess.Save(c.Request(), c.Response()); err != nil {

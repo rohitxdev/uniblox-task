@@ -53,7 +53,7 @@ func (h *Handler) GetAvailableCoupons(c echo.Context) error {
 		return c.NoContent(http.StatusUnauthorized)
 	}
 
-	coupons, err := h.Repo.GetAvailableCoupons(c.Request().Context(), user.Id)
+	coupons, err := h.Repo.GetAvailableCoupons(c.Request().Context(), user.ID)
 	if err != nil {
 		return err
 	}
