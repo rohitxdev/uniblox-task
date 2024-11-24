@@ -31,9 +31,9 @@ RUN --mount=type=bind,source=go.sum,target=go.sum \
 
 COPY . .
 
-ENV GOCACHE=/root/.cache/go-build
+# ENV GOCACHE=/root/.cache/go-build
 
-RUN --mount=type=cache,target=${GOCACHE} ./run build
+# RUN --mount=type=cache,target=${GOCACHE} ./run build
 
 
 # Final production image
