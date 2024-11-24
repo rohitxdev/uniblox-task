@@ -135,8 +135,8 @@ func TestCoupons(t *testing.T) {
 							"Content-Type": "application/json",
 						},
 						body: echo.Map{
-							"discount": 10,
-							"userId":   1,
+							"discountPercent": 10,
+							"userId":          1,
 						},
 					},
 					isAuthenticated: true,

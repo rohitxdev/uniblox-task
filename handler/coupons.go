@@ -63,7 +63,7 @@ func (h *Handler) GetAvailableCoupons(c echo.Context) error {
 }
 
 type CreateCouponRequest struct {
-	DiscountPercent int `json:"discount" validate:"required,min=0,max=100"`
+	DiscountPercent int `json:"discountPercent" validate:"required,min=0,max=100"`
 	UserID          int `json:"userId" validate:"required"`
 }
 
