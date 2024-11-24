@@ -8,9 +8,7 @@ WORKDIR /app
 
 RUN apk add --no-cache build-base bash git && go install github.com/air-verse/air@latest
 
-RUN --mount=type=bind,source=go.sum,target=go.sum \
-    --mount=type=bind,source=go.mod,target=go.mod \
-    go mod download -x
+RUN go mod download -x
 
 ENTRYPOINT ["./run","watch"]
 
@@ -30,9 +28,7 @@ RUN go mod download -x && go mod verify
 
 COPY . .
 
-ENV GOCACHE=/root/.cache/go-build
-
-RUN --mount=type=cache,target=${GOCACHE} ./run build
+RUN ./run build
 
 
 # Final production image
