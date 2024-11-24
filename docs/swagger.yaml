@@ -1,0 +1,387 @@
+definitions:
+  handler.CreateOrderResponse:
+    properties:
+      order:
+        $ref: '#/definitions/repo.Order'
+    type: object
+  handler.GetAllCouponsResponse:
+    properties:
+      coupons:
+        items:
+          $ref: '#/definitions/repo.Coupon'
+        type: array
+    type: object
+  handler.GetAllOrdersResponse:
+    properties:
+      orders:
+        items:
+          $ref: '#/definitions/repo.Order'
+        type: array
+    type: object
+  handler.GetAvailableCouponsResponse:
+    properties:
+      coupons:
+        items:
+          $ref: '#/definitions/repo.Coupon'
+        type: array
+    type: object
+  handler.GetCartResponse:
+    properties:
+      cart:
+        items:
+          $ref: '#/definitions/repo.CartItem'
+        type: array
+    type: object
+  handler.GetProductsResponse:
+    properties:
+      products:
+        items:
+          $ref: '#/definitions/repo.Product'
+        type: array
+    type: object
+  handler.response:
+    properties:
+      message:
+        type: string
+    type: object
+  repo.CartItem:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: integer
+      productId:
+        type: integer
+      quantity:
+        type: integer
+      updatedAt:
+        type: string
+      userId:
+        type: integer
+    type: object
+  repo.Coupon:
+    properties:
+      code:
+        type: string
+      createdAt:
+        type: string
+      discountPercent:
+        type: integer
+      id:
+        type: integer
+      isUsed:
+        type: boolean
+      updatedAt:
+        type: string
+      userId:
+        type: integer
+    type: object
+  repo.Order:
+    properties:
+      couponId:
+        type: integer
+      createdAt:
+        type: string
+      discountedAmount:
+        type: integer
+      id:
+        type: integer
+      status:
+        type: string
+      totalAmount:
+        type: integer
+      updatedAt:
+        type: string
+      userId:
+        type: integer
+    type: object
+  repo.Product:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: integer
+      imageUrl:
+        type: string
+      name:
+        type: string
+      price:
+        description: Price is in the smallest unit of the currency
+        type: integer
+      quantityLeft:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  repo.User:
+    properties:
+      accountStatus:
+        type: string
+      createdAt:
+        type: string
+      dateOfBirth:
+        type: string
+      email:
+        type: string
+      fullName:
+        type: string
+      gender:
+        type: string
+      id:
+        type: integer
+      imageUrl:
+        type: string
+      isVerified:
+        type: boolean
+      phoneNumber:
+        type: string
+      role:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /:
+    get:
+      description: Home page.
+      responses:
+        "200":
+          description: home page
+          schema:
+            type: html
+      summary: Home Page
+  /_:
+    get:
+      description: Admin route.
+      responses:
+        "200":
+          description: Admin page
+          schema:
+            type: string
+        "401":
+          description: invalid session
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Admin route
+  /carts:
+    get:
+      description: Get cart.
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.GetCartResponse'
+        "401":
+          description: invalid session
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Get cart
+  /carts/{productId}:
+    delete:
+      description: Delete cart item.
+      parameters:
+      - description: Product ID
+        in: path
+        name: productId
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.response'
+        "400":
+          description: invalid product
+          schema:
+            type: string
+        "401":
+          description: invalid session
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Delete cart item
+    post:
+      description: Add to cart.
+      parameters:
+      - description: Product ID
+        in: path
+        name: productId
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.response'
+        "400":
+          description: invalid product
+          schema:
+            type: string
+        "401":
+          description: invalid session
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Add to cart
+  /carts/{productId}/{quantity}:
+    put:
+      description: Update cart item quantity.
+      parameters:
+      - description: Product ID
+        in: path
+        name: productId
+        required: true
+        type: integer
+      - description: Quantity
+        in: path
+        name: quantity
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.response'
+        "400":
+          description: invalid product or quantity
+          schema:
+            type: string
+        "401":
+          description: invalid session
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Update cart item quantity
+  /config:
+    get:
+      description: Get client config.
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get config
+  /coupons:
+    get:
+      description: Get available coupons.
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.GetAvailableCouponsResponse'
+        "401":
+          description: invalid session
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Get available coupons
+  /coupons/all:
+    get:
+      description: Get all coupons.
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.GetAllCouponsResponse'
+        "401":
+          description: invalid session
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Get all coupons
+  /me:
+    get:
+      description: Get user.
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/repo.User'
+        "401":
+          description: invalid session
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Get user
+  /orders:
+    post:
+      description: Create order.
+      parameters:
+      - description: Coupon code
+        in: query
+        name: couponCode
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.CreateOrderResponse'
+        "400":
+          description: invalid coupon
+          schema:
+            type: string
+        "401":
+          description: invalid session
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Create order
+  /orders/all:
+    get:
+      description: Get all orders.
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: pageSize
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.GetAllOrdersResponse'
+        "401":
+          description: invalid session
+          schema:
+            type: string
+      security:
+      - ApiKeyAuth: []
+      summary: Get all orders
+  /products:
+    get:
+      description: Get products.
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.GetProductsResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get products
+swagger: "2.0"
