@@ -46,5 +46,6 @@ func setUpRoutes(e *echo.Echo, svc *Services) {
 	{
 		coupons.GET("/all", h.GetAllCoupons, h.require(RoleAdmin))
 		coupons.GET("", h.GetAvailableCoupons, h.require(RoleUser))
+		coupons.POST("", h.CreateCoupon, h.require(RoleAdmin))
 	}
 }

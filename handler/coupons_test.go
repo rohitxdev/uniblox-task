@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/labstack/echo/v4"
 	"github.com/rohitxdev/go-api-starter/blobstore"
 	"github.com/rohitxdev/go-api-starter/config"
 	"github.com/rohitxdev/go-api-starter/database"
@@ -117,6 +118,25 @@ func TestCoupons(t *testing.T) {
 						headers: map[string]string{
 							"Cookie":       cookie,
 							"Content-Type": "application/json",
+						},
+					},
+					isAuthenticated: true,
+				},
+				wantStatus: http.StatusOK,
+			},
+			{
+				name: "Create coupon",
+				args: args{
+					reqOpts: &httpRequestOpts{
+						method: http.MethodPost,
+						path:   "/coupons",
+						headers: map[string]string{
+							"Cookie":       cookie,
+							"Content-Type": "application/json",
+						},
+						body: echo.Map{
+							"discount": 10,
+							"userId":   1,
 						},
 					},
 					isAuthenticated: true,

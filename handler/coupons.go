@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/oklog/ulid/v2"
 	"github.com/rohitxdev/go-api-starter/repo"
 )
 
@@ -59,4 +60,41 @@ func (h *Handler) GetAvailableCoupons(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, GetAvailableCouponsResponse{Coupons: coupons})
+}
+
+type CreateCouponRequest struct {
+	DiscountPercent int `json:"discount" validate:"required,min=0,max=100"`
+	UserID          int `json:"userId" validate:"required"`
+}
+
+type CreateCouponResponse struct {
+	Coupon *repo.Coupon `json:"coupon"`
+}
+
+// @Summary Create coupon
+// @Description Create coupon.
+// @Router /coupons [post]
+// @Security ApiKeyAuth
+// @Param discount percent path int true "Discount percent"
+// @Param userId path int true "User ID"
+// @Success 200 {object} CreateCouponResponse
+// @Failure 400 {string} string "invalid request"
+// @Failure 401 {string} string "invalid session"
+func (h *Handler) CreateCoupon(c echo.Context) error {
+	var req CreateCouponRequest
+	if err := bindAndValidate(c, &req); err != nil {
+		return err
+	}
+
+	user := getUser(c)
+	if user == nil {
+		return c.NoContent(http.StatusUnauthorized)
+	}
+
+	coupon, err := h.Repo.CreateCoupon(c.Request().Context(), user.ID, ulid.Make().String(), req.DiscountPercent)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, CreateCouponResponse{Coupon: coupon})
 }
