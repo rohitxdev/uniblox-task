@@ -100,7 +100,7 @@ func (h *Handler) SendLoginEmail(c echo.Context) error {
 		protocol = "https"
 	}
 	emailData := map[string]any{
-		"loginURL":     fmt.Sprintf("%s://%s%s?token=%s", protocol, host, c.Path(), token),
+		"loginURL":     fmt.Sprintf("%s://%s%s?token=%s", protocol, req.Host, c.Path(), token),
 		"validMinutes": h.Config.LogInTokenExpiresIn.Minutes(),
 	}
 	emailOpts := email.BaseOpts{
