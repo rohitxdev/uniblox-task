@@ -24,6 +24,10 @@ func (h *Handler) LogOut(c echo.Context) error {
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
+		Secure:   h.Config.UseSecureCookie,
+	}
+	if sess.Options.Secure {
+		sess.Options.SameSite = http.SameSiteNoneMode
 	}
 	if err := sess.Save(c.Request(), c.Response()); err != nil {
 		return err
