@@ -32,7 +32,7 @@ func (r *Repo) CreateCoupon(ctx context.Context, userID int, code string, discou
 }
 
 func (r *Repo) GetAllCoupons(ctx context.Context, page int, pageSize int) ([]Coupon, error) {
-	var coupons []Coupon
+	coupons := make([]Coupon, 0)
 	rows, err := r.db.QueryContext(ctx, `SELECT id, user_id, code, discount_percent, is_used, created_at, updated_at FROM coupons ORDER BY created_at DESC LIMIT $1 OFFSET $2;`, pageSize, page*pageSize)
 	if err != nil {
 		return nil, err
@@ -51,7 +51,7 @@ func (r *Repo) GetAllCoupons(ctx context.Context, page int, pageSize int) ([]Cou
 }
 
 func (r *Repo) GetAvailableCoupons(ctx context.Context, userID int) ([]Coupon, error) {
-	var coupons []Coupon
+	coupons := make([]Coupon, 0)
 	rows, err := r.db.QueryContext(ctx, `SELECT id, code, discount_percent, is_used, created_at, updated_at FROM coupons WHERE user_id=$1 AND is_used=FALSE;`, userID)
 	if err != nil {
 		return nil, err

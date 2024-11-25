@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/oklog/ulid/v2"
@@ -9,8 +10,8 @@ import (
 )
 
 type GetAllCouponsRequest struct {
-	Page     int `query:"page"`
-	PageSize int `query:"pageSize"`
+	Page     string `query:"page"`
+	PageSize string `query:"pageSize"`
 }
 
 type GetAllCouponsResponse struct {
@@ -31,7 +32,23 @@ func (h *Handler) GetAllCoupons(c echo.Context) error {
 		return err
 	}
 
-	coupons, err := h.Repo.GetAllCoupons(c.Request().Context(), req.Page, req.PageSize)
+	page, err := strconv.Atoi(req.Page)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response{Message: "Invalid page"})
+	}
+	pageSize, err := strconv.Atoi(req.PageSize)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response{Message: "Invalid page size"})
+	}
+
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+	if page < 0 {
+		page = 1
+	}
+
+	coupons, err := h.Repo.GetAllCoupons(c.Request().Context(), page, pageSize)
 	if err != nil {
 		return err
 	}

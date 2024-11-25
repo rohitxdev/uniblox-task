@@ -13,7 +13,6 @@ func setUpRoutes(e *echo.Echo, svc *Services) {
 	e.GET("/swagger/*", echoSwagger.EchoWrapHandler())
 	e.GET("/config", h.GetConfig)
 	e.GET("/me", h.GetMe, h.require(RoleUser))
-	e.GET("/_", h.GetAdmin, h.require(RoleAdmin))
 	e.GET("/", h.GetHome)
 
 	auth := e.Group("/auth")
@@ -38,14 +37,19 @@ func setUpRoutes(e *echo.Echo, svc *Services) {
 
 	orders := e.Group("/orders")
 	{
-		orders.GET("/all", h.GetAllOrders, h.require(RoleAdmin))
 		orders.POST("", h.CreateOrder, h.require(RoleUser))
 	}
 
 	coupons := e.Group("/coupons")
 	{
-		coupons.GET("/all", h.GetAllCoupons, h.require(RoleAdmin))
 		coupons.GET("", h.GetAvailableCoupons, h.require(RoleUser))
 		coupons.POST("", h.CreateCoupon, h.require(RoleAdmin))
+	}
+
+	admin := e.Group("/_", h.require(RoleAdmin))
+	{
+		admin.GET("", h.GetAdmin)
+		admin.GET("/orders", h.GetAllOrders)
+		admin.GET("/coupons", h.GetAllCoupons)
 	}
 }

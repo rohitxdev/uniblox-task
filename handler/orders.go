@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -112,8 +113,8 @@ func (h *Handler) CreateOrder(c echo.Context) error {
 }
 
 type GetAllOrdersRequest struct {
-	Page     int `query:"page"`
-	PageSize int `query:"pageSize"`
+	Page     string `query:"page"`
+	PageSize string `query:"pageSize"`
 }
 
 type GetAllOrdersResponse struct {
@@ -130,12 +131,27 @@ type GetAllOrdersResponse struct {
 // @Failure 401 {string} string "invalid session"
 func (h *Handler) GetAllOrders(c echo.Context) error {
 	var req GetAllOrdersRequest
-	var err error
-	if err = bindAndValidate(c, &req); err != nil {
+	if err := bindAndValidate(c, &req); err != nil {
 		return err
 	}
 
-	orders, err := h.Repo.GetAllOrders(c.Request().Context(), req.Page, req.PageSize)
+	page, err := strconv.Atoi(req.Page)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response{Message: "Invalid page"})
+	}
+	pageSize, err := strconv.Atoi(req.PageSize)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, response{Message: "Invalid page size"})
+	}
+
+	if pageSize <= 0 {
+		pageSize = 20
+	}
+	if page < 0 {
+		page = 1
+	}
+
+	orders, err := h.Repo.GetAllOrders(c.Request().Context(), page, pageSize)
 	if err != nil {
 		return err
 	}

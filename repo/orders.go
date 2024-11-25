@@ -33,7 +33,7 @@ type OrderItem struct {
 }
 
 func (r *Repo) GetOrders(ctx context.Context) ([]Order, error) {
-	var orders []Order
+	orders := make([]Order, 0)
 	rows, err := r.db.QueryContext(ctx, `SELECT id, user_id, status, total_amount, created_at, updated_at FROM orders;`)
 	if err != nil {
 		return nil, err
@@ -201,18 +201,24 @@ func (r *Repo) CreateOrder(ctx context.Context, cart []CartItem, userID int, pre
 }
 
 func (r *Repo) GetAllOrders(ctx context.Context, page int, pageSize int) ([]Order, error) {
-	var orders []Order
-	rows, err := r.db.QueryContext(ctx, `SELECT id, user_id, status, total_amount, discounted_amount, created_at, updated_at FROM orders ORDER BY created_at DESC LIMIT $1 OFFSET $2;`, pageSize, page*pageSize)
+	orders := make([]Order, 0)
+	rows, err := r.db.QueryContext(ctx, `SELECT id, user_id, status, total_amount, discounted_amount, coupon_id, created_at, updated_at FROM orders ORDER BY created_at DESC LIMIT $1 OFFSET $2;`, pageSize, page*pageSize)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
+	fmt.Println(page, pageSize)
+
 	for rows.Next() {
 		var order Order
-		err = rows.Scan(&order.ID, &order.UserID, &order.Status, &order.TotalAmount, &order.DiscountedAmount, &order.CreatedAt, &order.UpdatedAt)
+		var couponID *int
+		err = rows.Scan(&order.ID, &order.UserID, &order.Status, &order.TotalAmount, &order.DiscountedAmount, &couponID, &order.CreatedAt, &order.UpdatedAt)
 		if err != nil {
 			return nil, err
+		}
+		if couponID != nil {
+			order.CouponID = *couponID
 		}
 		orders = append(orders, order)
 	}
