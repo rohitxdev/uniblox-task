@@ -92,7 +92,7 @@ type CreateCouponResponse struct {
 // @Description Create coupon.
 // @Router /coupons [post]
 // @Security ApiKeyAuth
-// @Param discount percent path int true "Discount percent"
+// @Param discount_percent path int true "Discount percent"
 // @Param userId path int true "User ID"
 // @Success 200 {object} CreateCouponResponse
 // @Failure 400 {string} string "invalid request"
