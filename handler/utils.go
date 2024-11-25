@@ -53,8 +53,11 @@ func CreateSession(c echo.Context, duration time.Duration, userId int, secure bo
 		MaxAge:   int(duration.Seconds()),
 		HttpOnly: true,
 		Secure:   secure,
-		SameSite: http.SameSiteNoneMode,
 	}
+	if sess.Options.Secure {
+		sess.Options.SameSite = http.SameSiteNoneMode
+	}
+
 	sess.Values["userId"] = userId
 	if err := sess.Save(c.Request(), c.Response()); err != nil {
 		return nil, err
